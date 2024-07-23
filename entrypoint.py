@@ -199,8 +199,6 @@ def main(
         presence_penalty=presence_penalty,
         prompt_chunk_size=diff_chunk_size
     )
-    logger.debug(f"Summarized review: {summarized_review}")
-    logger.debug(f"Chunked reviews: {chunked_reviews}")
 
     # Format reviews
     review_comment = format_review_comment(summarized_review=summarized_review,
