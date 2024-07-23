@@ -186,7 +186,8 @@ def main(
     # Set the Gemini API key
     api_key = os.getenv("GEMINI_API_KEY")
     genai.configure(api_key=api_key)
-
+    with open(diff) as f:
+        diff = f.read()
     # Request a code review
     chunked_reviews, summarized_review = get_review(
         diff=diff,
