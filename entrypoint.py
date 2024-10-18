@@ -207,7 +207,7 @@ def main(
     chunked_reviews, summarized_review = get_review(
         diff=diff,
         extra_prompt=extra_prompt,
-        model=model,
+        model="gemini-1.5-flash",
         temperature=temperature,
         max_tokens=max_tokens,
         top_p=top_p,
