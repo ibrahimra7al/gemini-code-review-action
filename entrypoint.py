@@ -11,14 +11,17 @@
 #  limitations under the License.
 import json
 import os
-from typing import List
-
+import time
 import click
-import google.generativeai as genai
 import requests
 from loguru import logger
+from typing import List
+import google.generativeai as genai
+from google.api_core.exceptions import ResourceExhausted
 
-
+retry_attempts = 10  # Number of retries
+delay_seconds = 40  # Delay between retries
+    
 def check_required_env_vars():
     """Check required environment variables"""
     required_env_vars = [
@@ -120,10 +123,21 @@ def get_review(
                 "parts": ["Ok"]
             },
         ])
-        convo.send_message(chunked_diff)
-        review_result = convo.last.text
-        logger.debug(f"Response AI: {review_result}")
-        chunked_reviews.append(review_result)
+        for attempt in range(retry_attempts):
+            try:
+                convo.send_message(chunked_diff)
+                review_result = convo.last.text
+                logger.debug(f"Response AI: {review_result}")
+                chunked_reviews.append(review_result)
+                break
+            except ResourceExhausted as e:
+                print(f"Resource exhausted, attempt {attempt + 1} of {retry_attempts}. Retrying in {delay_seconds} seconds...")
+                if attempt < retry_attempts - 1:  # If it's not the last attempt, wait and retry
+                    time.sleep(delay_seconds)
+                else:
+                    print("Max retry attempts reached. Exiting.")
+                    raise  # Re-raise the exception if all attempts fail
+
     # If the chunked reviews are only one, return it
 
     if len(chunked_reviews) == 1:
@@ -136,6 +150,7 @@ def get_review(
 
     chunked_reviews_join = "\n".join(chunked_reviews)
     convo = genai_model.start_chat(history=[])
+    time.sleep(delay_seconds)
     convo.send_message(summarize_prompt+"\n\n"+chunked_reviews_join)
     summarized_review = convo.last.text
     logger.debug(f"Response AI: {summarized_review}")
