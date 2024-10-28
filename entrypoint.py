@@ -16,6 +16,7 @@ import click
 import requests
 from loguru import logger
 from typing import List
+import sys
 import google.generativeai as genai
 from google.api_core.exceptions import ResourceExhausted
 
@@ -137,9 +138,8 @@ def get_review(
                 else:
                     print("Max retry attempts reached. Exiting.")
                     raise  # Re-raise the exception if all attempts fail
-
+            
     # If the chunked reviews are only one, return it
-
     if len(chunked_reviews) == 1:
         return chunked_reviews, chunked_reviews[0]
 
@@ -207,7 +207,7 @@ def main(
     chunked_reviews, summarized_review = get_review(
         diff=diff,
         extra_prompt=extra_prompt,
-        model="gemini-1.5-flash",
+        model=model,
         temperature=temperature,
         max_tokens=max_tokens,
         top_p=top_p,
@@ -231,4 +231,9 @@ def main(
 
 if __name__ == "__main__":
     # pylint: disable=no-value-for-parameter
-    main()
+    try:
+        main()
+    except Exception as e:
+        logger.error(f"Error: {e}")
+        # PROCESS EXIT
+        sys.exit(0)
